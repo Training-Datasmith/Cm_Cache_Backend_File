@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
 {
     /** @var array */
-    protected $_options = array(
+    protected $_options = [
         'cache_dir' => null,               // Path to cache files
         'file_name_prefix' => 'cm',        // Prefix for cache directories created
         'file_locking' => true,            // Best to keep enabled
@@ -48,15 +48,12 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         'use_chmod' => false,              // Do not use chmod on files and directories (should use umask() to control permissions)
         'directory_mode' => 0770,          // Filesystem permissions for created directories (requires use_chmod)
         'file_mode' => 0660,               // Filesystem permissions for created files (requires use_chmod)
-    );
+    ];
 
     /** @var bool */
     protected $_isTagDirChecked;
 
-    /**
-     * @param array $options
-     */
-    public function __construct(array $options = array())
+    public function __construct(array $options = [])
     {
         // Magento-friendly cache dir
         if (empty($options['cache_dir']) && class_exists('Mage', false)) {
@@ -111,9 +108,8 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      *
      * @param  array $directives Assoc of directives
      * @throws Zend_Cache_Exception
-     * @return void
      */
-    public function setDirectives($directives)
+    public function setDirectives($directives): void
     {
         if (!is_array($directives)) {
             Zend_Cache::throwException('Directives parameter must be an array');
@@ -122,7 +118,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
             if (!is_string($name)) {
                 Zend_Cache::throwException("Incorrect option name : $name");
             }
-            $name = strtolower($name);
+            $name = strtolower((string) $name);
             if (array_key_exists($name, $this->_directives)) {
                 $this->_directives[$name] = $value;
             }
@@ -146,7 +142,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         if (! $cache) {
             return false;
         }
-        list($metadatas, $data) = $cache;
+        [$metadatas, $data] = $cache;
         if (! $doNotTestCacheValidity && (time() > $metadatas['expire'])) {
             // ?? $this->remove($id);
             return false;
@@ -176,7 +172,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      * @param  bool|int $specificLifetime If != false, set a specific lifetime for this cache record (null => infinite lifetime)
      * @return boolean true if no problem
      */
-    public function save($data, $id, $tags = array(), $specificLifetime = false)
+    public function save($data, $id, $tags = [], $specificLifetime = false)
     {
         $file = $this->_file($id);
         $path = $this->_path($id);
@@ -184,8 +180,6 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
             if (!is_writable($path)) {
                 // maybe, we just have to build the directory structure
                 $this->_recursiveMkdirAndChmod($id);
-            }
-            if (!is_writable($path)) {
                 return false;
             }
         }
@@ -194,15 +188,14 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         } else {
             $hash = '';
         }
-        $metadatas = array(
+        $metadatas = [
             'hash' => $hash,
             'mtime' => time(),
             'expire' => $this->_expireTime($this->getLifetime($specificLifetime)),
             'tags' => implode(',', $tags),
-        );
+        ];
         $res = $this->_filePutContents($file, serialize($metadatas)."\n".$data);
-        $res = $res && $this->_updateIdsTags(array($id), $tags, 'merge');
-        return $res;
+        return $res && $this->_updateIdsTags([$id], $tags, 'merge');
     }
 
     /**
@@ -217,7 +210,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         $metadatas = $this->_getCache($file, false);
         if ($metadatas) {
             $boolRemove   = $this->_remove($file);
-            $boolTags     = $this->_updateIdsTags(array($id), explode(',', $metadatas['tags']), 'diff');
+            $boolTags     = $this->_updateIdsTags([$id], explode(',', (string) $metadatas['tags']), 'diff');
             return $boolRemove && $boolTags;
         }
         return false;
@@ -240,17 +233,14 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      * @param array $tags
      * @return boolean true if no problem
      */
-    public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array())
+    public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = [])
     {
         // We use this protected method to hide the recursive stuff
         clearstatcache();
-        switch($mode) {
-            case Zend_Cache::CLEANING_MODE_ALL:
-            case Zend_Cache::CLEANING_MODE_OLD:
-                return $this->_clean($this->_options['cache_dir'], $mode);
-            default:
-                return $this->_cleanNew($mode, $tags);
-        }
+        return match ($mode) {
+            Zend_Cache::CLEANING_MODE_ALL, Zend_Cache::CLEANING_MODE_OLD => $this->_clean($this->_options['cache_dir'], $mode),
+            default => $this->_cleanNew($mode, $tags),
+        };
     }
 
     /**
@@ -262,7 +252,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     {
         $prefix = $this->_tagFile('');
         $prefixLen = strlen($prefix);
-        $tags = array();
+        $tags = [];
         foreach (@glob($prefix . '*') as $tagFile) {
             $tags[] = substr($tagFile, $prefixLen);
         }
@@ -277,7 +267,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      * @param array $tags array of tags
      * @return array array of matching cache ids (string)
      */
-    public function getIdsMatchingTags($tags = array())
+    public function getIdsMatchingTags($tags = [])
     {
         return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_MATCHING_TAG, $tags, false);
     }
@@ -290,7 +280,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      * @param array $tags array of tags
      * @return array array of not matching cache ids (string)
      */
-    public function getIdsNotMatchingTags($tags = array())
+    public function getIdsNotMatchingTags($tags = [])
     {
         return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG, $tags, false);
     }
@@ -303,7 +293,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      * @param array $tags array of tags
      * @return array array of any matching cache ids (string)
      */
-    public function getIdsMatchingAnyTags($tags = array())
+    public function getIdsMatchingAnyTags($tags = [])
     {
         return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, $tags, false);
     }
@@ -323,7 +313,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     {
         $metadatas = $this->_getCache($this->_file($id), false);
         if ($metadatas) {
-            $metadatas['tags'] = explode(',', $metadatas['tags']);
+            $metadatas['tags'] = explode(',', (string) $metadatas['tags']);
         }
         return $metadatas;
     }
@@ -342,16 +332,16 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         if (!$cache) {
             return false;
         }
-        list($metadatas, $data) = $cache;
+        [$metadatas, $data] = $cache;
         if (time() > $metadatas['expire']) {
             return false;
         }
-        $newMetadatas = array(
+        $newMetadatas = [
             'hash' => $metadatas['hash'],
             'mtime' => time(),
             'expire' => $metadatas['expire'] + $extraLifetime,
             'tags' => $metadatas['tags']
-        );
+        ];
         return !! $this->_filePutContents($file, serialize($newMetadatas)."\n".$data);
     }
 
@@ -390,7 +380,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
             return false;
         }
         if ($withData) {
-            return array($metadata, $data);
+            return [$metadata, $data];
         }
         return $metadata;
     }
@@ -431,7 +421,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      */
     protected function _path($id, $parts = false)
     {
-        $partsArray = array();
+        $partsArray = [];
         $root = $this->_options['cache_dir'];
         $prefix = $this->_options['file_name_prefix'];
         if ($this->_options['hashed_directory_level'] > 0) {
@@ -464,7 +454,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      * @throws Zend_Cache_Exception
      * @return boolean True if no problem
      */
-    protected function _clean($dir, $mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array())
+    protected function _clean($dir, $mode = Zend_Cache::CLEANING_MODE_ALL, $tags = [])
     {
         if (!is_dir($dir)) {
             return false;
@@ -503,12 +493,11 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
                 if ($mode == Zend_Cache::CLEANING_MODE_OLD) {
                     if (time() > $metadatas['expire']) {
                         $result = $this->_remove($file) && $result;
-                        $result = $this->_updateIdsTags(array($id), explode(',', $metadatas['tags']), 'diff') && $result;
+                        $result = $this->_updateIdsTags([$id], explode(',', (string) $metadatas['tags']), 'diff') && $result;
                     }
                     continue;
-                } else {
-                    Zend_Cache::throwException('Invalid mode for clean() method.');
                 }
+                Zend_Cache::throwException('Invalid mode for clean() method.');
             }
             if (is_dir($file) && $this->_options['hashed_directory_level'] > 0) {
                 // Recursive call
@@ -540,7 +529,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      * @throws Zend_Cache_Exception
      * @return boolean True if no problem
      */
-    protected function _cleanNew($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array())
+    protected function _cleanNew($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = [])
     {
         $result = true;
         $ids = $this->_getIdsByTags($mode, $tags, true);
@@ -567,7 +556,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      */
     protected function _getIdsByTags($mode, $tags, $delete)
     {
-        $ids = array();
+        $ids = [];
         switch($mode) {
             case Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG:
                 $ids = $this->getIds();
@@ -596,7 +585,10 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
             case Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG:
                 foreach ($tags as $tag) {
                     $file = $this->_tagFile($tag);
-                    if (! is_file($file) || ! ($fd = @fopen($file, 'rb+'))) {
+                    if (! is_file($file)) {
+                        continue;
+                    }
+                    if (! ($fd = @fopen($file, 'rb+'))) {
                         continue;
                     }
                     if ($this->_options['file_locking']) {
@@ -664,10 +656,10 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
             $ids = false;
         }
         if(! $ids) {
-            return array();
+            return [];
         }
         $ids = trim(substr($ids, 0, strrpos($ids, "\n")));
-        return $ids ? explode("\n", $ids) : array();
+        return $ids ? explode("\n", $ids) : [];
     }
 
     /**
@@ -759,7 +751,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      * For unit testing only
      * @param $id
      */
-    public function ___expire($id)
+    public function ___expire($id): void
     {
         $metadata = $this->_getMetadatas($id);
         $this->touch($id, 1 - $metadata['expire']);
