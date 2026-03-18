@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /*
 ==New BSD License==
 
@@ -340,7 +342,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
             'hash' => $metadatas['hash'],
             'mtime' => time(),
             'expire' => $metadatas['expire'] + $extraLifetime,
-            'tags' => $metadatas['tags']
+            'tags' => $metadatas['tags'],
         ];
         return !! $this->_filePutContents($file, serialize($newMetadatas)."\n".$data);
     }
@@ -533,7 +535,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     {
         $result = true;
         $ids = $this->_getIdsByTags($mode, $tags, true);
-        switch($mode) {
+        switch ($mode) {
             case Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG:
             case Zend_Cache::CLEANING_MODE_MATCHING_TAG:
                 $this->_updateIdsTags($ids, $tags, 'diff');
@@ -557,7 +559,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     protected function _getIdsByTags($mode, $tags, $delete)
     {
         $ids = [];
-        switch($mode) {
+        switch ($mode) {
             case Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG:
                 $ids = $this->getIds();
                 if ($tags) {
@@ -650,12 +652,12 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     {
         if (is_resource($tag)) {
             $ids = stream_get_contents($tag);
-        } elseif(file_exists($this->_tagFile($tag))) {
+        } elseif (file_exists($this->_tagFile($tag))) {
             $ids = @file_get_contents($this->_tagFile($tag));
         } else {
             $ids = false;
         }
-        if(! $ids) {
+        if (! $ids) {
             return [];
         }
         $ids = trim(substr($ids, 0, strrpos($ids, "\n")));
@@ -674,7 +676,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         if (empty($ids)) {
             return $result;
         }
-        foreach($tags as $tag) {
+        foreach ($tags as $tag) {
             $file = $this->_tagFile($tag);
             if (file_exists($file)) {
                 if ($mode == 'diff' || (mt_rand(1, 100) == 1 && filesize($file) > 4096)) {

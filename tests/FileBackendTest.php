@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /*
 ==New BSD License==
 
@@ -39,7 +41,7 @@ class FileBackendTest extends \CommonExtendedBackend
     protected $_instance;
     protected $_cache_dir;
 
-    public function __construct($name = null, array $data = array(), $dataName = '')
+    public function __construct($name = null, array $data = [], $dataName = '')
     {
         parent::__construct('Cm_Cache_Backend_File', $data, $dataName);
     }
@@ -47,9 +49,9 @@ class FileBackendTest extends \CommonExtendedBackend
     public function setUp(): void
     {
         $this->mkdir();
-        $this->_instance = new Cm_Cache_Backend_File(array(
+        $this->_instance = new Cm_Cache_Backend_File([
             'cache_dir' => $this->getTmpDir() . DIRECTORY_SEPARATOR,
-        ));
+        ]);
         parent::setUp();
     }
 
@@ -70,14 +72,14 @@ class FileBackendTest extends \CommonExtendedBackend
 
     public function testGetWithANonExistingCacheIdAndANullLifeTime()
     {
-        $this->_instance->setDirectives(array('lifetime' => null));
+        $this->_instance->setDirectives(['lifetime' => null]);
         $this->assertFalse($this->_instance->load('barbar'));
     }
 
     public function testSaveCorrectCallWithHashedDirectoryStructure()
     {
         $this->_instance->setOption('hashed_directory_level', 2);
-        $res = $this->_instance->save('data to cache', 'foo', array('tag1', 'tag2'));
+        $res = $this->_instance->save('data to cache', 'foo', ['tag1', 'tag2']);
         $this->assertTrue($res);
     }
 
@@ -92,13 +94,13 @@ class FileBackendTest extends \CommonExtendedBackend
     public function testSaveWithABadCacheDir()
     {
         $this->_instance->setOption('cache_dir', '/foo/bar/lfjlqsdjfklsqd/');
-        $res = $this->_instance->save('data to cache', 'foo', array('tag1', 'tag2'));
+        $res = $this->_instance->save('data to cache', 'foo', ['tag1', 'tag2']);
         $this->assertFalse($res);
     }
 
     public function testSaveWithNullLifeTime2()
     {
-        $res = $this->_instance->save('data to cache', 'foo', array('tag1', 'tag2'), null);
+        $res = $this->_instance->save('data to cache', 'foo', ['tag1', 'tag2'], null);
         $this->assertTrue($res);
         $metadatas = $this->_instance->getMetadatas('foo');
         $this->assertGreaterThan(time() + 99999999, $metadatas['expire']);

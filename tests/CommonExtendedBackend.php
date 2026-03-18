@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Zend Framework
  *
@@ -34,7 +36,7 @@ abstract class CommonExtendedBackend extends \CommonBackend
 {
     private $_capabilities;
 
-    public function __construct($name = null, array $data = array(), $dataName = '')
+    public function __construct($name = null, array $data = [], $dataName = '')
     {
         parent::__construct($name);
     }
@@ -95,7 +97,7 @@ abstract class CommonExtendedBackend extends \CommonBackend
             # unsupported by this backend
             return;
         }
-        $res = $this->_instance->getIdsMatchingTags(array('tag3'));
+        $res = $this->_instance->getIdsMatchingTags(['tag3']);
         $this->assertTrue(count($res) == 3);
         $this->assertTrue(in_array('bar', $res));
         $this->assertTrue(in_array('bar2', $res));
@@ -108,7 +110,7 @@ abstract class CommonExtendedBackend extends \CommonBackend
             # unsupported by this backend
             return;
         }
-        $res = $this->_instance->getIdsMatchingTags(array('tag2'));
+        $res = $this->_instance->getIdsMatchingTags(['tag2']);
         $this->assertTrue(count($res) == 1);
         $this->assertTrue(in_array('bar3', $res));
     }
@@ -119,10 +121,9 @@ abstract class CommonExtendedBackend extends \CommonBackend
             # unsupported by this backend
             return;
         }
-        $res = $this->_instance->getIdsMatchingTags(array('tag9999'));
+        $res = $this->_instance->getIdsMatchingTags(['tag9999']);
         $this->assertTrue(count($res) == 0);
     }
-
 
     public function testGetIdsMatchingTags4()
     {
@@ -130,7 +131,7 @@ abstract class CommonExtendedBackend extends \CommonBackend
             # unsupported by this backend
             return;
         }
-        $res = $this->_instance->getIdsMatchingTags(array('tag3', 'tag4'));
+        $res = $this->_instance->getIdsMatchingTags(['tag3', 'tag4']);
         $this->assertTrue(count($res) == 1);
         $this->assertTrue(in_array('bar', $res));
     }
@@ -141,7 +142,7 @@ abstract class CommonExtendedBackend extends \CommonBackend
             # unsupported by this backend
             return;
         }
-        $res = $this->_instance->getIdsNotMatchingTags(array('tag3'));
+        $res = $this->_instance->getIdsNotMatchingTags(['tag3']);
         $this->assertEquals(0, count($res));
     }
 
@@ -151,7 +152,7 @@ abstract class CommonExtendedBackend extends \CommonBackend
             # unsupported by this backend
             return;
         }
-        $res = $this->_instance->getIdsNotMatchingTags(array('tag1'));
+        $res = $this->_instance->getIdsNotMatchingTags(['tag1']);
         $this->assertTrue(count($res) == 2);
         $this->assertTrue(in_array('bar', $res));
         $this->assertTrue(in_array('bar3', $res));
@@ -163,7 +164,7 @@ abstract class CommonExtendedBackend extends \CommonBackend
             # unsupported by this backend
             return;
         }
-        $res = $this->_instance->getIdsNotMatchingTags(array('tag1', 'tag4'));
+        $res = $this->_instance->getIdsNotMatchingTags(['tag1', 'tag4']);
         $this->assertTrue(count($res) == 1);
         $this->assertTrue(in_array('bar3', $res));
     }
